@@ -14,6 +14,13 @@ xy = [x; y];
 diff = xy(:,2:end)-xy(:,1:end-1);
 
 %%% YOUR CODE TO COMPUTE GRADIENT HERE %%%
+
+direction = diff ./ sqrt(sum(diff.*diff));
+grad = direction(:, 1:end-1) - direction(:, 2:end);
+
+u(1,:) = grad(1, :);
+v(1,:) = grad(2, :);
+
 %%% END HOMEWORK PROBLEM %%%
 
 figure;
@@ -21,8 +28,15 @@ plot(x,y,'linewidth',2,'color','black'); hold on;
 quiver(x(2:end-1),y(2:end-1),u,v,'linewidth',1,'color','red');
 axis equal;
 
+
+
 %% Problem 2(d)
 %%% YOUR CODE TO COMPUTE KAPPA HERE %%%
+
+kappa = sum(direction(:, 1:end-1) .* direction(:, 2:end));
+kappa = acos(kappa);
+kappa = 2*sin(kappa/2);
+
 %%% END HOMEWORK PROBLEM %%%
 
 figure;
@@ -38,12 +52,12 @@ colorbar;
 t0 = 0;
 t1 = pi*1.25;
 nSamples = 100;
-nSteps = 20;
+nSteps = 10000;
 
 % We provide a few examples of curves to try
 %curveFunction = @(t) [(cos(t)-cos(3*t).^3); (sin(t)-sin(3*t).^3)]';
-%curveFunction = @(t) [cos(t);sin(t)]';
-curveFunction = @(t) [t;(t-t0).*(t1-t)]';
+curveFunction = @(t) [cos(t);sin(t)]';
+% curveFunction = @(t) [t;(t-t0).*(t1-t)]';
 curve = curveFunction(linspace(t0,t1,nSamples));
 
 % Time step
@@ -52,9 +66,21 @@ plt = plot(curve(:,1),curve(:,2),'k','linewidth',2);
 axis equal;
 for i=1:nSteps
     %%% YOUR CODE HERE TO PERFORM GRADIENT DESCENT %%%
+
+    h = 0.05;
+
+    diff = curve(2:end, :)-curve(1:end-1, :);
+    direction = diff ./ sqrt(sum(diff.*diff));
+
+    grad = zeros(nSamples,2);
+    grad(2:end-1,:) = direction(1:end-1, :) - direction(2:end, :);
+
+    curve = curve - h*grad;
+
     %%% END HOMEWORK PROBLEM %%%
     plt.XData = curve(:,1);
     plt.YData = curve(:,2);
     drawnow;
+
 end
 
