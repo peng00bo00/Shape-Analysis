@@ -1,8 +1,8 @@
 function elasticRods(bendModulus, twistModulus, totalTwist)
 
 arguments
-    bendModulus (1, 1) double = 1
-    twistModulus (1, 1) double = 1
+    bendModulus (1, 1) double = 1.
+    twistModulus (1, 1) double = 1.
     totalTwist (1, 1) double = pi
 end
 
@@ -32,6 +32,10 @@ patch('Faces', links, 'Vertices', curveData.verts.', 'LineWidth', 3, 'EdgeColor'
 quiver3(curveData.midpointsR(1, :), curveData.midpointsR(2, :), curveData.midpointsR(3, :),...
         curveData.u(1, 1:end-1), curveData.u(2, 1:end-1), curveData.u(3, 1:end-1),...
         'color','red','linewidth',1);
+%% add v plot
+quiver3(curveData.midpointsR(1, :), curveData.midpointsR(2, :), curveData.midpointsR(3, :),...
+        curveData.v(1, 1:end-1), curveData.v(2, 1:end-1), curveData.v(3, 1:end-1),...
+        'color','blue','linewidth',1);
 view(3); axis image vis3d manual off;
 ax = gca;
 ax.Clipping = 'off';
@@ -58,7 +62,16 @@ for i = 1:10000
         quiver3(curveData.midpointsR(1, :), curveData.midpointsR(2, :), curveData.midpointsR(3, :),...
                 curveData.u(1, 1:end-1), curveData.u(2, 1:end-1), curveData.u(3, 1:end-1),...
                 'color','red','linewidth',1);
+
+        %% add v plot
+        quiver3(curveData.midpointsR(1, :), curveData.midpointsR(2, :), curveData.midpointsR(3, :),...
+                curveData.v(1, 1:end-1), curveData.v(2, 1:end-1), curveData.v(3, 1:end-1),...
+                'color','blue','linewidth',1);
+
     end
+
+    E = computeEnergy(curveData);
+    E(1)
 end
 
 function curveData = prepare(curveData)
@@ -90,6 +103,25 @@ end
 function bishopFrame = propagateBishopFrame(curveData, startFrame)
     %%% PROBLEM 3(a) - YOUR CODE HERE TO PARALLEL TRANSPORT AROUND THE CURVE
     parallelTransport = zeros(3, 3, nSamples);
+
+    %% initial frame
+    u = startFrame(:, 1);
+    v = startFrame(:, 2);
+
+    for j=2:(nSamples+1)
+        ptIdx = mod(j - 1, nSamples) + 1;
+
+        b1 = [curveData.tangentsL(:, ptIdx), u, v];
+
+        R = vrrotvec2mat(vrrotvec(curveData.tangentsL(:,ptIdx), curveData.tangentsR(:,ptIdx)));
+        u = R * u;
+        v = cross(curveData.tangentsR(:, ptIdx), u);
+
+        b2 = [curveData.tangentsR(:, ptIdx), u, v];
+
+        parallelTransport(:,:, ptIdx) = b2*b1';
+    end
+
     %%% END HOMEWORK PROBLEM
     
     bishopFrame = zeros(3, 2, nSamples + 1);
@@ -124,12 +156,67 @@ end
 %%% PROBLEM 3(c) Part I - YOUR CODE HERE
 function bendForce = computeBendForce(curveData)
     bendForce = zeros(size(curveData.verts));
+
+    for j=2:(nSamples + 1)
+        curr = mod(j - 1, nSamples) + 1;
+        prev = mod(j - 2, nSamples) + 1;
+        next = mod(j, nSamples) + 1;
+        
+        denom = curveData.edgeLengthsL(curr)*curveData.edgeLengthsR(curr) + dot(curveData.edgesL(:, curr), curveData.edgesR(:, curr));
+
+        %% prev
+        l = 2*curveData.dualLengths(prev);
+        curvatureBinormal = curveData.curvatureBinormals(:, prev);
+
+        grad_prev = 2*skew(curveData.edgesR(:, curr)) + curvatureBinormal*curveData.edgesR(:, curr)';
+        grad_prev = grad_prev / denom;
+        bend_prev = -2*bendModulus/l * grad_prev' * curvatureBinormal;
+
+        %% next
+        l = 2*curveData.dualLengths(next);
+        curvatureBinormal = curveData.curvatureBinormals(:, next);
+
+        grad_next = 2*skew(curveData.edgesL(:, curr)) - curvatureBinormal*curveData.edgesL(:, curr)';
+        grad_next = grad_next / denom;
+        bend_next = -2*bendModulus/l * grad_next' * curvatureBinormal;
+
+        %% curr
+        l = 2*curveData.dualLengths(curr);
+        curvatureBinormal = curveData.curvatureBinormals(:, curr);
+
+        grad_curr = -(grad_prev + grad_next);
+        bend_curr = -2*bendModulus/l * grad_curr' * curvatureBinormal;
+
+        bendForce(:, curr) = bend_prev + bend_next + bend_curr;
+
+    end
 end
 %%% END HOMEWORK PROBLEM
 
 %%% PROBLEM 3(c) Part II - YOUR CODE HERE
 function twistForce = computeTwistForce(curveData)
     twistForce = zeros(size(curveData.verts));
+
+    for j=2:(nSamples + 1)
+        curr = mod(j - 1, nSamples) + 1;
+        prev = mod(j - 2, nSamples) + 1;
+        next = mod(j, nSamples) + 1;
+
+        curvatureBinormal = curveData.curvatureBinormals(:, curr);
+
+        %% prev
+        grad_prev = curvatureBinormal / (2*curveData.edgeLengthsL(curr));
+
+        %% next
+        grad_next =-curvatureBinormal / (2*curveData.edgeLengthsR(curr));
+
+        %% curr
+        grad_curr =-(grad_prev + grad_next);
+
+        twistForce(:, curr) = grad_prev + grad_next + grad_curr;
+    end
+
+    twistForce = twistForce * twistModulus * curveData.totalTwist / (curveData.totalLength);
 end
 %%% END HOMEWORK PROBLEM
 
@@ -155,6 +242,10 @@ function [verts, velocities] = fastProjection(verts0, verts, mass, lengthsR, dt)
         constraint = (sum(edgesR.^2, 1) - lengthsR.^2).';
     end
     velocities = (verts - verts0) / dt;
+end
+
+function skewX = skew(x)
+    skewX = [0 -x(3) x(2) ; x(3) 0 -x(1) ; -x(2) x(1) 0 ];
 end
 
 end
