@@ -55,7 +55,7 @@ nSamples = 100;
 nSteps = 10000;
 
 % We provide a few examples of curves to try
-%curveFunction = @(t) [(cos(t)-cos(3*t).^3); (sin(t)-sin(3*t).^3)]';
+% curveFunction = @(t) [(cos(t)-cos(3*t).^3); (sin(t)-sin(3*t).^3)]';
 curveFunction = @(t) [cos(t);sin(t)]';
 % curveFunction = @(t) [t;(t-t0).*(t1-t)]';
 curve = curveFunction(linspace(t0,t1,nSamples));
