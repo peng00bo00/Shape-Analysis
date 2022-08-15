@@ -76,5 +76,3 @@ $$
 $$
 \kappa = 2 \sin \frac{\theta}{2}
 $$
-
-# Problem 3

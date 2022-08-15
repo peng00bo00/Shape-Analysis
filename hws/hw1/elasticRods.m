@@ -3,7 +3,7 @@ function elasticRods(bendModulus, twistModulus, totalTwist)
 arguments
     bendModulus (1, 1) double = 1.
     twistModulus (1, 1) double = 1.
-    totalTwist (1, 1) double = pi
+    totalTwist (1, 1) double = 2*pi
 end
 
 nSamples = 100;
@@ -111,15 +111,15 @@ function bishopFrame = propagateBishopFrame(curveData, startFrame)
     for j=2:(nSamples+1)
         ptIdx = mod(j - 1, nSamples) + 1;
 
-        b1 = [curveData.tangentsL(:, ptIdx), u, v];
+        TNBleft = [curveData.tangentsL(:, ptIdx), u, v];
 
         R = vrrotvec2mat(vrrotvec(curveData.tangentsL(:,ptIdx), curveData.tangentsR(:,ptIdx)));
         u = R * u;
         v = cross(curveData.tangentsR(:, ptIdx), u);
 
-        b2 = [curveData.tangentsR(:, ptIdx), u, v];
+        TNBright = [curveData.tangentsR(:, ptIdx), u, v];
 
-        parallelTransport(:,:, ptIdx) = b2*b1';
+        parallelTransport(:,:, ptIdx) = TNBright * TNBleft';
     end
 
     %%% END HOMEWORK PROBLEM
@@ -199,8 +199,8 @@ function twistForce = computeTwistForce(curveData)
 
     for j=2:(nSamples + 1)
         curr = mod(j - 1, nSamples) + 1;
-        prev = mod(j - 2, nSamples) + 1;
-        next = mod(j, nSamples) + 1;
+%         prev = mod(j - 2, nSamples) + 1;
+%         next = mod(j, nSamples) + 1;
 
         curvatureBinormal = curveData.curvatureBinormals(:, curr);
 
