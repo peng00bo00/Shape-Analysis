@@ -73,8 +73,8 @@ showDescriptor(Xt,T,H);
 
 %% Non-singular Mean Curvature Flow
 Xt = X;
-maxiters=1000;
-tau = 0.00001;
+maxiters=500;
+tau = 0.00005;
 cotL =-cotLaplacian(Xt,T);
 
 for t=1:maxiters
