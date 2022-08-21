@@ -30,16 +30,17 @@ showDescriptor(X,T,H);
 maxiters=1000;
 Xt = X;
 % ADD CODE FOR EXPLICIT INTEGRATOR HERE %%%%
-tau = 0.000005;
+tau = 0.00001;
 saveas(gcf,['explicit_integrator_step-0.png']);
 for t=1:maxiters
     t
     cotL =-cotLaplacian(Xt,T);
-    Xt = Xt - tau*cotL*Xt./barycentricArea(Xt,T);
+    VA = barycentricArea(Xt,T);
+    Xt = Xt - tau*cotL*Xt./VA;
 
     if mod(t, 10) == 0
         H = meanCurvature(Xt,T);
-        showDescriptor(Xt,T,H);
+        showDescriptor(Xt,T,sqrt(H));
         saveas(gcf,['explicit_integrator_step-' int2str(t) '.png']);
     end
 end
@@ -55,12 +56,13 @@ tau = 0.00001;
 for t=1:maxiters
     t
     cotL =-cotLaplacian(Xt,T);
-    A = speye(nv)+tau*cotL./barycentricArea(Xt,T);
+    VA = barycentricArea(Xt,T);
+    A = speye(nv)+tau*cotL./VA;
     Xt = A \ Xt;
 
     if mod(t, 10) == 0
         H = meanCurvature(Xt,T);
-        showDescriptor(Xt,T,H);
+        showDescriptor(Xt,T,sqrt(H));
         saveas(gcf,['implicit_integrator_step-' int2str(t) '.png']);
     end
 end
@@ -77,12 +79,13 @@ cotL =-cotLaplacian(Xt,T);
 
 for t=1:maxiters
     t
-    A = speye(nv)+tau*cotL./barycentricArea(Xt,T);
+    VA = barycentricArea(Xt,T);
+    A = speye(nv)+tau*cotL./VA;
     Xt = A \ Xt;
 
     if mod(t, 10) == 0
         H = meanCurvature(Xt,T);
-        showDescriptor(Xt,T,H);
+        showDescriptor(Xt,T,sqrt(H));
         saveas(gcf,['non-sigular_implicit_integrator_step-' int2str(t) '.png']);
     end
 end
