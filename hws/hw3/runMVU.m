@@ -1,7 +1,7 @@
 function runMVU(k, n)
 
 if nargin < 2
-    n = 1000;
+    n = 400;
 end
 
 [x, theta] = swissroll(n);
