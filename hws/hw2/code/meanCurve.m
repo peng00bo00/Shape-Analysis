@@ -17,8 +17,8 @@ fprintf('Symmetry: %d\n', norm(L-L','fro'));
 
 % Divided differences approximation
 %% it may take a long time to compute numerical gradient
-% G = gradApprox(X,T);
-% fprintf('Difference between gradient and cotan Laplacian %f\n', norm(-.5*L*X-G,'fro'));
+G = gradApprox(X,T);
+fprintf('Difference between gradient and cotan Laplacian %f\n', norm(-.5*L*X-G,'fro'));
 
 % Barycentric area
 fprintf('Difference between sum of barycentric area and surface area %f\n', sum(barycentricArea(X,T))-A);
@@ -106,70 +106,81 @@ end
 
 % ADD CODE TO COMPUTE COTANGENT LAPLACIAN HERE %%%%%%%%%
 function [L] = cotLaplacian(X,T)
-    nv = size(X,1);
-    nt = size(T,1);
+%     nv = size(X,1);
+%     nt = size(T,1);
+% 
+%     %% indices and values
+%     I = zeros(nt*12,1);
+%     J = zeros(nt*12,1);
+%     V = zeros(nt*12,1);
+% 
+%     for t = 1:nt
+%         %% vertices
+%         X1 = X(T(t,1),:);
+%         X2 = X(T(t,2),:);
+%         X3 = X(T(t,3),:);
+% 
+%         %% edges
+%         e12= X2 - X1;
+%         e23= X3 - X2;
+%         e31= X1 - X3;
+% 
+%         %% cot
+%         cot1 = cotTheta(e12,-e31);
+%         cot2 = cotTheta(e23,-e12);
+%         cot3 = cotTheta(e31,-e23);
+% 
+%         %% check http://rodolphe-vaillant.fr/entry/20/compute-harmonic-weights-on-a-triangular-mesh for more details
+%         %% also note that we'll accumulate values on each vertex
+%         
+%         %% e23
+%         I(t*12-11) = T(t,2); J(t*12-11) = T(t,3); V(t*12-11) = cot1;
+%         I(t*12-10) = T(t,3); J(t*12-10) = T(t,2); V(t*12-10) = cot1;
+%         I(t*12-9)  = T(t,2); J(t*12-9)  = T(t,2); V(t*12-9)  =-cot1;
+%         I(t*12-8)  = T(t,3); J(t*12-8)  = T(t,3); V(t*12-8)  =-cot1;
+% 
+% %         L(T(t,2), T(t,3)) = L(T(t,2), T(t,3)) + cot1;
+% %         L(T(t,3), T(t,2)) = L(T(t,3), T(t,2)) + cot1;
+% %         L(T(t,2), T(t,2)) = L(T(t,2), T(t,2)) - cot1;
+% %         L(T(t,3), T(t,3)) = L(T(t,3), T(t,3)) - cot1;
+%         
+%         %% e31
+%         I(t*12-7)  = T(t,3); J(t*12-7)  = T(t,1); V(t*12-7)  = cot2;
+%         I(t*12-6)  = T(t,1); J(t*12-6)  = T(t,3); V(t*12-6)  = cot2;
+%         I(t*12-5)  = T(t,3); J(t*12-5)  = T(t,3); V(t*12-5)  =-cot2;
+%         I(t*12-4)  = T(t,1); J(t*12-4)  = T(t,1); V(t*12-4)  =-cot2;
+% 
+% %         L(T(t,3), T(t,1)) = L(T(t,3), T(t,1)) + cot2;
+% %         L(T(t,1), T(t,3)) = L(T(t,1), T(t,3)) + cot2;
+% %         L(T(t,3), T(t,3)) = L(T(t,3), T(t,3)) - cot2;
+% %         L(T(t,1), T(t,1)) = L(T(t,1), T(t,1)) - cot2;
+% 
+%         %% e12
+%         I(t*12-3)  = T(t,1); J(t*12-3)  = T(t,2); V(t*12-3)  = cot3;
+%         I(t*12-2)  = T(t,2); J(t*12-2)  = T(t,1); V(t*12-2)  = cot3;
+%         I(t*12-1)  = T(t,1); J(t*12-1)  = T(t,1); V(t*12-1)  =-cot3;
+%         I(t*12)    = T(t,2); J(t*12)    = T(t,2); V(t*12)    =-cot3;
+% 
+% %         L(T(t,1), T(t,2)) = L(T(t,1), T(t,2)) + cot3;
+% %         L(T(t,2), T(t,1)) = L(T(t,2), T(t,1)) + cot3;
+% %         L(T(t,1), T(t,1)) = L(T(t,1), T(t,1)) - cot3;
+% %         L(T(t,2), T(t,2)) = L(T(t,2), T(t,2)) - cot3;
+% 
+%     end
+% 
+%     %% build cotLaplacian
+%     L = sparse(I,J,V,nv,nv);
 
-    %% indices and values
-    I = zeros(nt*12,1);
-    J = zeros(nt*12,1);
-    V = zeros(nt*12,1);
+nv = size(X, 1);
 
-    for t = 1:nt
-        %% vertices
-        X1 = X(T(t,1),:);
-        X2 = X(T(t,2),:);
-        X3 = X(T(t,3),:);
+E = reshape(X(T(:, [2, 3, 1]), :) - X(T, :), [size(T), 3]);
+cots = -dot(E(:, [2, 3, 1], :), E(:, [3, 1, 2], :), 3) ./ vecnorm(cross(E(:, [2, 3, 1], :), E(:, [3, 1, 2], :), 3), 2, 3);
 
-        %% edges
-        e12= X2 - X1;
-        e23= X3 - X2;
-        e31= X1 - X3;
+Gcot = sparse(T, T(:, [2, 3, 1]), cots, nv, nv);
+L = Gcot + Gcot.';
+L = diag(sparse(sum(L, 1))) - L;
+L =-L;
 
-        %% cot
-        cot1 = cotTheta(e12,-e31);
-        cot2 = cotTheta(e23,-e12);
-        cot3 = cotTheta(e31,-e23);
-
-        %% check http://rodolphe-vaillant.fr/entry/20/compute-harmonic-weights-on-a-triangular-mesh for more details
-        %% also note that we'll accumulate values on each vertex
-        
-        %% e23
-        I(t*12-11) = T(t,2); J(t*12-11) = T(t,3); V(t*12-11) = cot1;
-        I(t*12-10) = T(t,3); J(t*12-10) = T(t,2); V(t*12-10) = cot1;
-        I(t*12-9)  = T(t,2); J(t*12-9)  = T(t,2); V(t*12-9)  =-cot1;
-        I(t*12-8)  = T(t,3); J(t*12-8)  = T(t,3); V(t*12-8)  =-cot1;
-
-%         L(T(t,2), T(t,3)) = L(T(t,2), T(t,3)) + cot1;
-%         L(T(t,3), T(t,2)) = L(T(t,3), T(t,2)) + cot1;
-%         L(T(t,2), T(t,2)) = L(T(t,2), T(t,2)) - cot1;
-%         L(T(t,3), T(t,3)) = L(T(t,3), T(t,3)) - cot1;
-        
-        %% e31
-        I(t*12-7)  = T(t,3); J(t*12-7)  = T(t,1); V(t*12-7)  = cot2;
-        I(t*12-6)  = T(t,1); J(t*12-6)  = T(t,3); V(t*12-6)  = cot2;
-        I(t*12-5)  = T(t,3); J(t*12-5)  = T(t,3); V(t*12-5)  =-cot2;
-        I(t*12-4)  = T(t,1); J(t*12-4)  = T(t,1); V(t*12-4)  =-cot2;
-
-%         L(T(t,3), T(t,1)) = L(T(t,3), T(t,1)) + cot2;
-%         L(T(t,1), T(t,3)) = L(T(t,1), T(t,3)) + cot2;
-%         L(T(t,3), T(t,3)) = L(T(t,3), T(t,3)) - cot2;
-%         L(T(t,1), T(t,1)) = L(T(t,1), T(t,1)) - cot2;
-
-        %% e12
-        I(t*12-3)  = T(t,1); J(t*12-3)  = T(t,2); V(t*12-3)  = cot3;
-        I(t*12-2)  = T(t,2); J(t*12-2)  = T(t,1); V(t*12-2)  = cot3;
-        I(t*12-1)  = T(t,1); J(t*12-1)  = T(t,1); V(t*12-1)  =-cot3;
-        I(t*12)    = T(t,2); J(t*12)    = T(t,2); V(t*12)    =-cot3;
-
-%         L(T(t,1), T(t,2)) = L(T(t,1), T(t,2)) + cot3;
-%         L(T(t,2), T(t,1)) = L(T(t,2), T(t,1)) + cot3;
-%         L(T(t,1), T(t,1)) = L(T(t,1), T(t,1)) - cot3;
-%         L(T(t,2), T(t,2)) = L(T(t,2), T(t,2)) - cot3;
-
-    end
-
-    %% build cotLaplacian
-    L = sparse(I,J,V,nv,nv);
 end
 % END HOMEWORK ASSIGNMENT %%%%%%%%%%%
 
