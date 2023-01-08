@@ -1,6 +1,9 @@
 %% PROBLEM 4
 %%% a very basic intrinsic surface fluid simulation 
-function fluidSim()
+% function fluidSim()
+
+%% clear
+clear; clc;
 
 addpath('utils/');
 
@@ -19,7 +22,7 @@ V = V ./ vecnorm(V, 2, 2);
 V = (10 * meanEdgeLength) .* V;
 
 % initialize color field
-color = hsv2rgb([cos(3 * data.vertices(:, 3)).^2, ones(data.nv, 2)]);% + sin(10 * data.vertices(:, 2));%randn(data.nv, 1);
+color = hsv2rgb([cos(3 * data.vertices(:, 3)).^2, ones(data.nv, 2)]);% + sin(10 * data.vertices(:, 2));
 
 % initialize source region
 sourceInd = find(max(data.faceCenters(:, 3)) - data.faceCenters(:, 3) < 0.05);
@@ -42,9 +45,14 @@ for i=1:maxiters
 
     %%% PROBLEM 4(d) - YOUR CODE HERE
     % integrate source force
+    V = V + sourceForce * dt;
     
     %%% PROBLEM 4(e) - YOUR CODE HERE
     % implement pressure projection. Make sure V is divergence free
+    VV = reshape(V', [3*data.nf, 1]);
+    zeta =-decL \ (Div * VV);
+
+    V = V - reshape(Grad * zeta, [3, data.nf])';
     
     % visualize velocity field
     if mod(i, 66) == 0
@@ -58,9 +66,12 @@ for i=1:maxiters
     
     %%% PROBLEM 4(a) - YOUR CODE HERE
     % construct Dv operator
+    Dv = getDirectionalDerivative(data, V, Grad);
     
     %%% PROBLEM 4(b) - YOUR CODE HERE
     % advect color field
+    TV = speye(data.nv, data.nv) - dt*Dv + 0.5*dt*dt*Dv*Dv;
+    color = TV * color;
 
     %%% PROBLEM 4(c) - YOUR CODE HERE
     % implement fluid self-advection
@@ -70,5 +81,17 @@ for i=1:maxiters
     t = t + dt;
 end
 
+% end
+
+function Dv = getDirectionalDerivative(data, Vt, Grad)
+
+%% directional derivative
+tripI = repmat((1:data.nf)', 1, 3);
+tripJ = repmat((((1:data.nf) - 1)*3)', 1, 3) + (1:3);
+
+Dv = sparse(tripI, tripJ, Vt, data.nf, 3*data.nf) * Grad;
+
+%% face to vertex
+Dv = data.FtoV * Dv;
 end
 

@@ -15,18 +15,31 @@ signal(maxind) = 1;
 
 %% PROBLEM 2 - THE HEAT METHOD
 %%% YOUR CODE HERE - short-time heat diffusion
-phi = zeros(data.nv, 1);
+% phi = zeros(data.nv, 1);
+
+%% solve linear system (A-dt*L)u=u0
+L =-data.cotLaplacian;
+A = data.massMatrix;
+phi = (A-dt*L) \ signal;
+
 
 [Div, Grad] = getDivGrad(data);
 
 %%% YOUR CODE HERE - compute the normalized gradient of phi
-qvec = zeros(data.nf, 3);
+% qvec = zeros(data.nf, 3);
+qvec = Grad * phi;
+qvec = reshape(qvec, [3 data.nf])';
+qvec =-qvec ./ vecnorm(qvec, 2, 2);
 
 %%% YOUR CODE HERE - compute divergence of normalized gradient
-divVals = zeros(data.nv, 1);
+% divVals = zeros(data.nv, 1);
+x = reshape(qvec', [], 1);
+divVals = Div * x;
 
 %%% YOUR CODE HERE - final geodesic distances
-dist = zeros(data.nv, 1);
+% dist = zeros(data.nv, 1);
+dist = L \ divVals;
+dist = dist - dist(maxind);
 %%% END HOMEWORK PROBLEM
 
 %% Visualization
