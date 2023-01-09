@@ -70,7 +70,7 @@ for i=1:maxiters
     
     %%% PROBLEM 4(b) - YOUR CODE HERE
     % advect color field
-    TV = speye(data.nv, data.nv) - dt*Dv + 0.5*dt*dt*Dv*Dv;
+    TV = expMap(Dv, -dt);
     color = TV * color;
 
     %%% PROBLEM 4(c) - YOUR CODE HERE
@@ -93,5 +93,15 @@ Dv = sparse(tripI, tripJ, Vt, data.nf, 3*data.nf) * Grad;
 
 %% face to vertex
 Dv = data.FtoV * Dv;
+end
+
+function T = expMap(D, t)
+%% expoential map of D
+I = speye(size(D));
+tD = t*D;
+tD2= t*t*D*D;
+
+T = I + tD + 0.5*tD2;
+
 end
 
