@@ -99,13 +99,13 @@ function CL = buildConnectionLaplacian(data)
         nj = data.vertNormals(vj, :); nj = nj ./ norm(nj);
         nk = data.vertNormals(vk, :); nk = nk ./ norm(nk);
         
-        rij = vrrotvec2mat(vrrotvec(nj, ni)); rji = rij';
-        rjk = vrrotvec2mat(vrrotvec(nk, nj)); rkj = rjk';
-        rki = vrrotvec2mat(vrrotvec(ni, nk)); rik = rki';
+        rij = vrrotvec2mat(vrrotvec(ni, nj)); rji = rij';
+        rjk = vrrotvec2mat(vrrotvec(nj, nk)); rkj = rjk';
+        rki = vrrotvec2mat(vrrotvec(nk, ni)); rik = rki';
     
-        tripV(i, 1:3, 1:3) = (b+c)*eye(3); tripV(i, 1:3, 4:6) = -c*rij;       tripV(i, 1:3, 7:9) = -b*rik;
-        tripV(i, 4:6, 1:3) = -c*rji;       tripV(i, 4:6, 4:6) = (c+a)*eye(3); tripV(i, 4:6, 7:9) = -a*rjk;
-        tripV(i, 7:9, 1:3) = -b*rki;       tripV(i, 7:9, 4:6) = -a*rkj;       tripV(i, 7:9, 7:9) = (a+b)*eye(3);
+        tripV(i, 1:3, 1:3) = (b+c)*eye(3); tripV(i, 1:3, 4:6) = -c*rji;       tripV(i, 1:3, 7:9) = -b*rki;
+        tripV(i, 4:6, 1:3) = -c*rij;       tripV(i, 4:6, 4:6) = (c+a)*eye(3); tripV(i, 4:6, 7:9) = -a*rkj;
+        tripV(i, 7:9, 1:3) = -b*rik;       tripV(i, 7:9, 4:6) = -a*rjk;       tripV(i, 7:9, 7:9) = (a+b)*eye(3);
     end
 
     tripI = reshape(tripI, data.nf, []);
