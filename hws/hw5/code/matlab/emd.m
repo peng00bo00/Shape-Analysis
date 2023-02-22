@@ -9,10 +9,14 @@ nt = size(T,1);
 mesh = getMeshData(X,T,10);
 
 %% Define distributions
-source = 1;
+source = 1000;
 q = zeros(mesh.numVertices,mesh.numVertices);
 q(source,:) = 1./mesh.areaWeights(source);
 p = spdiags(1./mesh.areaWeights,0,mesh.numVertices,mesh.numVertices);
+
+distances = zeros(size(p,2),1);
+distances(source) = 1;
+showDescriptor(mesh,distances);
 
 %% Regularized EMD code
 tol = 1e-6;
@@ -35,14 +39,18 @@ aw = bsxfun(@times,mesh.areaWeights,w);
 for i=1:niter
     % YOUR CODE HERE TO UPDATE v, w VARIABLES %%%
     % Remember to multiply by areaWeights
-
+    v = p./kernel(aw .* w);
+    w = q./kernelTranspose(aw .* v);
     % END CODING ASSIGNMENT %%%
     
     oldDistances = distances;
 
     ll = @(x) real(log(x));
     % YOUR CODE HERE TO COMPUTE DISTANCE USING v, w %%%
-    
+    distances = alpha * mesh.areaWeights' * (p.*ll(v) + q.*ll(w));
+    distances = distances';
+
+%     showDescriptor(mesh,sqrt(max(distances,0)));
     % END CODING ASSIGNMENT %%%
     
     change = norm(oldDistances-distances,'fro');

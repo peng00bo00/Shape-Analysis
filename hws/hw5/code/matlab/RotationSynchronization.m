@@ -6,11 +6,11 @@ N = size(Oij, 1) / 3;
 M = rotationsfactory(3, N);
 problem.M = M;
 problem.cost = @mycost;
-problem.egrad = @myegrad;
-problem.ehess = @myehess;
+% problem.egrad = @myegrad;
+% problem.ehess = @myehess;
 
-% figure; checkgradient(problem); pause;
-% figure; checkhessian(problem); pause;
+figure; checkgradient(problem);% pause;
+figure; checkhessian(problem);% pause;
 
 Rhat = trustregions(problem);
 
@@ -18,7 +18,10 @@ RijHat = reshape(Rhat, 3, 3 * N)' * reshape(Rhat, 3, 3 * N);
 
 function [cost, store] = mycost(Y, store)
     %% Homework: implement the cost
-    cost = 0;
+    Ri = reshape(Y, 3, 3 * N);
+    OijHat = Ri' * Ri;
+
+    cost = 0.5*sum((OijHat - Oij).^2,"all");
 end
 
 function [egrad, store] = myegrad(Y, store)
